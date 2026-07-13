@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>Cybersecurity Roadmap Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-color: #050505; --surface-color: #111111; --text-primary: #ffffff; --text-secondary: #a0a0a0; --accent-color: #ffffff; --border-color: #333333; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Space Grotesk', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; }
+
+        /* Login Screen */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .login-box { background: var(--surface-color); padding: 40px; border: 1px solid var(--border-color); border-radius: 8px; text-align: center; width: 100%; max-width: 400px; }
+        .login-box h2 { margin-bottom: 20px; font-weight: 700; letter-spacing: 1px; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 20px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); outline: none; }
+        .btn { background: var(--accent-color); color: #000; border: none; padding: 12px 24px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; width: 100%; }
+        .btn:hover { background: #cccccc; }
+
+        /* Dashboard */
+        #dashboard { display: none; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
+        h1 { font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Progress Bar */
+        .progress-container { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 30px; }
+        .progress-bar-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+        .progress-bar-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 0.5s ease; }
+        
+        /* Upload Section */
+        .upload-section { margin-bottom: 30px; padding: 20px; border: 1px dashed var(--border-color); text-align: center; border-radius: 8px; }
+        .upload-section input[type="file"] { display: none; }
+        .upload-label { cursor: pointer; color: var(--text-secondary); text-decoration: underline; }
+
+        /* Task List */
+        .task-list { display: grid; gap: 15px; }
+        .task-card { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 15px; }
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+        .task-title { font-size: 16px; flex: 1; }
+        .task-meta { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+        
+        .task-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        select { background: #000; color: #fff; border: 1px solid var(--border-color); padding: 8px; outline: none; }
+        input[type="text"].note-input { flex: 1; background: transparent; border: 1px solid var(--border-color); color: #fff; padding: 8px; outline: none; min-width: 200px; }
+        input[type="text"].note-input:focus { border-color: var(--accent-color); }
+        .saving-status { color: #4CAF50; font-size: 12px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>ACCESS SECURED AREA</h2>
+            <input type="password" id="password" placeholder="Enter Password">
+            <button class="btn" onclick="checkLogin()">LOGIN</button>
+            <p id="login-error" style="color: red; margin-top: 10px; display: none; font-size: 14px;">Incorrect Password</p>
+        </div>
+    </div>
+
+    <div id="dashboard">
+        <header>
+            <h1>ROADMAP_TRACKER</h1>
+            <span id="sync-status" class="saving-status">Synced to Cloud</span>
+            <button class="btn" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="logout()">LOGOUT</button>
+        </header>
+
+        <div class="upload-section">
+            <label class="upload-label">
+                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)">
+                [ Upload New Roadmap CSV ]
+            </label>
+        </div>
+
+        <div class="progress-container">
+            <div style="display: flex; justify-content: space-between;">
+                <span>OVERALL PROGRESS</span>
+                <span id="progress-text">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="task-list" id="task-list">
+            <p style='text-align:center; color: #a0a0a0;'>Loading data from cloud...</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. നിങ്ങളുടെ ഫയർബേസ് കോൺഫിഗറേഷൻ ഇവിടെ നൽകുക
+        const firebaseConfig = {
+           // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAyII2lTSbdZgciY4X_aw8sJvaGHURl8_s",
+  authDomain: "roadmaptracker-591d1.firebaseapp.com",
+  projectId: "roadmaptracker-591d1",
+  storageBucket: "roadmaptracker-591d1.firebasestorage.app",
+  messagingSenderId: "30758142255",
+  appId: "1:30758142255:web:3c5fea9ebacde8662921da",
+  measurementId: "G-1TN021BLV6"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+        };
+        
+        // ഫയർബേസ് ഇനിഷ്യലൈസ് ചെയ്യുന്നു
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const PASSWORD = "admin"; 
+        const DOC_ID = "my_roadmap_progress"; // Database Document ID
+
+        let tasks = [];
+        let taskData = {};
+
+        function checkLogin() {
+            const pwd = document.getElementById('password').value;
+            if (pwd === PASSWORD) {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadDataFromCloud();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
+
+        window.onload = () => {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadDataFromCloud();
+            }
+        };
+
+        // ഡാറ്റ ഫയർബേസിൽ നിന്ന് ലോഡ് ചെയ്യുന്നു
+        function loadDataFromCloud() {
+            db.collection("roadmaps").doc(DOC_ID).get().then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    tasks = JSON.parse(data.csvStructure || "[]");
+                    taskData = JSON.parse(data.progressData || "{}");
+                    renderTasks();
+                } else {
+                    document.getElementById('task-list').innerHTML = "<p style='text-align:center; color: #a0a0a0;'>No cloud data found. Please upload your roadmap CSV file.</p>";
+                }
+            }).catch((error) => {
+                console.error("Error getting document:", error);
+            });
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    tasks = results.data.filter(row => row.Task && row.Task.trim() !== "");
+                    taskData = {};
+                    tasks.forEach((task, index) => {
+                        taskData[index] = { 
+                            status: 'Not Completed', 
+                            note: '',
+                            day: task.Day || '0'
+                        };
+                    });
+                    saveDataToCloud();
+                    renderTasks();
+                }
+            });
+        }
+
+        // ഡാറ്റ ഫയർബേസിലേക്ക് സേവ് ചെയ്യുന്നു
+        function saveDataToCloud() {
+            const syncStatus = document.getElementById('sync-status');
+            syncStatus.innerText = "Saving to Cloud...";
+            syncStatus.style.display = "inline";
+            syncStatus.style.color = "#ffaa00";
+
+            db.collection("roadmaps").doc(DOC_ID).set({
+                csvStructure: JSON.stringify(tasks),
+                progressData: JSON.stringify(taskData),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                syncStatus.innerText = "Synced to Cloud";
+                syncStatus.style.color = "#4CAF50";
+                setTimeout(() => { syncStatus.style.display = "none"; }, 2000);
+                updateProgress();
+            }).catch((error) => {
+                console.error("Error writing document: ", error);
+                syncStatus.innerText = "Sync Failed!";
+                syncStatus.style.color = "red";
+            });
+        }
+
+        function handleStatusChange(index, day, newStatus) {
+            let today = new Date().toDateString();
+            let lastCompletedDate = localStorage.getItem('lastCompletedDate');
+            let lastCompletedDay = localStorage.getItem('lastCompletedDay');
+
+            if (newStatus === 'Completed') {
+                if (lastCompletedDate === today && lastCompletedDay && lastCompletedDay !== day) {
+                    alert("ഒരു ദിവസം തന്നെ അടുത്ത ദിവസത്തെ ടാസ്ക്കുകൾ ചെയ്യാൻ കഴിയില്ല. ഇന്നത്തെ കാര്യങ്ങൾ ഇൻ-ഡെപ്ത് ആയി പഠിക്കാം.");
+                    renderTasks();
+                    return;
+                }
+                localStorage.setItem('lastCompletedDate', today);
+                localStorage.setItem('lastCompletedDay', day);
+            }
+
+            taskData[index].status = newStatus;
+            saveDataToCloud();
+        }
+
+        // ടൈപ്പിംഗ് കഴിഞ്ഞതിനു ശേഷം മാത്രം സേവ് ചെയ്യാൻ (Debounce)
+        let typingTimer;
+        function handleNoteChange(index, noteText) {
+            clearTimeout(typingTimer);
+            taskData[index].note = noteText;
+            typingTimer = setTimeout(saveDataToCloud, 1000); 
+        }
+
+        function updateProgress() {
+            if (tasks.length === 0) return;
+            let completed = 0;
+            for (let key in taskData) {
+                if (taskData[key].status === 'Completed') completed++;
+            }
+            let percentage = Math.round((completed / tasks.length) * 100);
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-text').innerText = percentage + '%';
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+
+            tasks.forEach((task, index) => {
+                let data = taskData[index] || { status: 'Not Completed', note: '', day: task.Day };
+                
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                
+                card.innerHTML = `
+                    <div class="task-header">
+                        <div>
+                            <div class="task-meta">Day ${task.Day || '-'} | ${task.Week || '-'}</div>
+                            <div class="task-title">${task.Task}</div>
+                        </div>
+                    </div>
+                    <div class="task-controls">
+                        <select onchange="handleStatusChange(${index}, '${task.Day}', this.value)">
+                            <option value="Not Completed" ${data.status === 'Not Completed' ? 'selected' : ''}>Not Completed</option>
+                            <option value="In Progress" ${data.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Completed" ${data.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                        <input type="text" class="note-input" placeholder="Add notes here..." value="${data.note}" oninput="handleNoteChange(${index}, this.value)">
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+            updateProgress();
+        }
+    </script>
+</body>
+</html>
