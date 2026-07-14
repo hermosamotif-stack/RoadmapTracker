@@ -1,33 +1,131 @@
-<script>
-        // 1. നിങ്ങളുടെ ഫയർബേസ് കോൺഫിഗറേഷൻ ഇവിടെ നൽകുക
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>Cybersecurity Roadmap Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg-color: #050505; 
+            --surface-color: #111111; 
+            --text-primary: #ffffff; 
+            --text-secondary: #a0a0a0; 
+            --accent-color: #ffffff; 
+            --border-color: #333333; 
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Space Grotesk', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; }
+
+        /* Login Screen */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .login-box { background: var(--surface-color); padding: 40px; border: 1px solid var(--border-color); border-radius: 8px; text-align: center; width: 100%; max-width: 400px; }
+        .login-box h2 { margin-bottom: 20px; font-weight: 700; letter-spacing: 1px; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 20px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); outline: none; }
+        .btn { background: var(--accent-color); color: #000; border: none; padding: 12px 24px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; width: 100%; }
+        .btn:hover { background: #cccccc; }
+
+        /* Dashboard */
+        #dashboard { display: none; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
+        h1 { font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Progress Bar */
+        .progress-container { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 30px; }
+        .progress-bar-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+        .progress-bar-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 0.5s ease; }
+        
+        /* Upload Section */
+        .upload-section { margin-bottom: 30px; padding: 20px; border: 1px dashed var(--border-color); text-align: center; border-radius: 8px; }
+        .upload-section input[type="file"] { display: none; }
+        .upload-label { cursor: pointer; color: var(--text-secondary); text-decoration: underline; }
+
+        /* Task List */
+        .task-list { display: grid; gap: 15px; }
+        .task-card { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 15px; }
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+        .task-title { font-size: 16px; flex: 1; }
+        .task-meta { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+        
+        .task-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        select { background: #000; color: #fff; border: 1px solid var(--border-color); padding: 8px; outline: none; }
+        input[type="text"].note-input { flex: 1; background: transparent; border: 1px solid var(--border-color); color: #fff; padding: 8px; outline: none; min-width: 200px; }
+        input[type="text"].note-input:focus { border-color: var(--accent-color); }
+        .saving-status { color: #4CAF50; font-size: 12px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>ACCESS SECURED AREA</h2>
+            <input type="password" id="password" placeholder="Enter Password">
+            <button class="btn" onclick="checkLogin()">LOGIN</button>
+            <p id="login-error" style="color: red; margin-top: 10px; display: none; font-size: 14px;">Incorrect Password</p>
+        </div>
+    </div>
+
+    <div id="dashboard">
+        <header>
+            <h1>ROADMAP_TRACKER</h1>
+            <span id="sync-status" class="saving-status">Synced to Cloud</span>
+            <button class="btn" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="logout()">LOGOUT</button>
+        </header>
+
+        <div class="upload-section">
+            <label class="upload-label">
+                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)">
+                [ Upload New Roadmap CSV ]
+            </label>
+        </div>
+
+        <div class="progress-container">
+            <div style="display: flex; justify-content: space-between;">
+                <span>OVERALL PROGRESS</span>
+                <span id="progress-text">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="task-list" id="task-list">
+            </div>
+    </div>
+
+    <script>
+        // നിങ്ങളുടെ യഥാർത്ഥ ഫയർബേസ് കോൺഫിഗറേഷൻ ഇവിടെ ചേർത്തിട്ടുണ്ട്
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAyII2lTSbdZgciY4X_aw8sJvaGHURl8_s",
+            authDomain: "roadmaptracker-591d1.firebaseapp.com",
+            projectId: "roadmaptracker-591d1",
+            storageBucket: "roadmaptracker-591d1.firebasestorage.app",
+            messagingSenderId: "30758142255",
+            appId: "1:30758142255:web:3c5fea9ebacde8662921da",
+            measurementId: "G-1TN021BLV6"
         };
         
-        // ഫയർബേസ് ഇനിഷ്യലൈസ് ചെയ്യുന്നു
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        const PASSWORD = "admin"; 
+        const PASSWORD = "admin"; // ലോഗിൻ ചെയ്യാനുള്ള പാസ്‌വേഡ്
         const DOC_ID = "my_roadmap_progress"; 
 
         let tasks = [];
         let taskData = {};
 
-        // ലോഗിൻ ചെക്ക് ചെയ്യുന്ന ഫങ്ക്ഷൻ (ഇവിടെ മാറ്റം വരുത്തിയിട്ടുണ്ട്)
         function checkLogin() {
             const pwd = document.getElementById('password').value;
             if (pwd === PASSWORD) {
                 sessionStorage.setItem('isLoggedIn', 'true');
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
-                
-                // ലോഗിൻ ആയാൽ ഉടൻ ക്ലൗഡിൽ നിന്ന് ഡാറ്റ എടുക്കുന്നു
                 loadDataFromCloud();
             } else {
                 document.getElementById('login-error').style.display = 'block';
@@ -47,7 +145,6 @@
             }
         };
 
-        // ഡാറ്റ ഫയർബേസിൽ നിന്ന് ലോഡ് ചെയ്യുന്നു
         function loadDataFromCloud() {
             const list = document.getElementById('task-list');
             list.innerHTML = "<p style='text-align:center; color: #a0a0a0;'>Loading data from cloud...</p>";
@@ -63,7 +160,7 @@
                 }
             }).catch((error) => {
                 console.error("Error getting document:", error);
-                list.innerHTML = "<p style='text-align:center; color: red;'>Error connecting to Firebase. Check your Config or Rules.</p>";
+                list.innerHTML = "<p style='text-align:center; color: red;'>Error connecting to Firebase. Make sure Firestore Rules are set to public.</p>";
             });
         }
 
@@ -90,7 +187,6 @@
             });
         }
 
-        // ഡാറ്റ ഫയർബേസിലേക്ക് സേവ് ചെയ്യുന്നു
         function saveDataToCloud() {
             const syncStatus = document.getElementById('sync-status');
             syncStatus.innerText = "Saving to Cloud...";
@@ -186,3 +282,5 @@
             updateProgress();
         }
     </script>
+</body>
+</html>
