@@ -3,103 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>Cybersecurity Roadmap Tracker</title>
+    <title>Premium Cybersecurity Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg-color: #050505; 
-            --surface-color: #111111; 
+            --bg-color: #000000; 
+            --surface-color: #0a0a0a; 
+            --surface-card: #121212;
             --text-primary: #ffffff; 
-            --text-secondary: #a0a0a0; 
+            --text-secondary: #888888; 
             --accent-color: #ffffff; 
-            --border-color: #333333; 
+            --border-color: #222222; 
+            --border-hover: #444444;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Space Grotesk', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; }
+        body { background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; padding-bottom: 60px; }
 
         /* Login Screen */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .login-box { background: var(--surface-color); padding: 40px; border: 1px solid var(--border-color); border-radius: 8px; text-align: center; width: 100%; max-width: 400px; }
-        .login-box h2 { margin-bottom: 20px; font-weight: 700; letter-spacing: 1px; }
-        .login-box input { width: 100%; padding: 12px; margin-bottom: 20px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); outline: none; }
-        .btn { background: var(--accent-color); color: #000; border: none; padding: 12px 24px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; width: 100%; }
-        .btn:hover { background: #cccccc; }
+        .login-box { background: var(--surface-color); padding: 40px; border: 1px solid var(--border-color); border-radius: 0px; text-align: center; width: 100%; max-width: 400px; }
+        .login-box h2 { margin-bottom: 25px; font-weight: 700; letter-spacing: 2px; font-size: 20px; }
+        .login-box input { width: 100%; padding: 14px; margin-bottom: 20px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); outline: none; text-align: center; font-size: 16px; }
+        .login-box input:focus { border-color: var(--accent-color); }
+        
+        .btn { background: var(--accent-color); color: #000; border: 1px solid var(--accent-color); padding: 12px 24px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+        .btn:hover { background: transparent; color: #fff; }
+        .btn-secondary { background: transparent; color: #fff; border: 1px solid var(--border-color); }
+        .btn-secondary:hover { border-color: #fff; }
 
-        /* Dashboard */
-        #dashboard { display: none; max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        /* Dashboard Layout */
+        #dashboard { display: none; max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
-        h1 { font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { font-size: 22px; font-weight: 700; letter-spacing: 3px; }
+
+        /* Top Bar Widgets (Timer & Status) */
+        .top-widgets { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        @media (max-width: 768px) { .top-widgets { grid-template-columns: 1fr; } }
+        
+        .widget-card { background: var(--surface-color); border: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; justify-content: center; }
+        .widget-label { font-size: 11px; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+        
+        /* Timer UI */
+        .timer-display { font-size: 32px; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; font-family: monospace; }
+        .timer-controls { display: flex; gap: 10px; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+
+        /* Navigation Tabs */
+        .nav-tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 30px; }
+        .tab-link { background: transparent; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; font-size: 13px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid transparent; }
+        .tab-link.active { color: var(--text-primary); border-bottom-color: var(--accent-color); font-weight: 700; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         /* Progress Bar */
-        .progress-container { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 30px; }
-        .progress-bar-bg { width: 100%; height: 10px; background: #222; border-radius: 5px; overflow: hidden; margin-top: 10px; }
-        .progress-bar-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 0.5s ease; }
+        .progress-bar-bg { width: 100%; height: 6px; background: #111; overflow: hidden; margin-top: 8px; border: 1px solid var(--border-color); }
+        .progress-bar-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 0.4s ease; }
         
-        /* Upload Section */
-        .upload-section { margin-bottom: 30px; padding: 20px; border: 1px dashed var(--border-color); text-align: center; border-radius: 8px; }
-        .upload-section input[type="file"] { display: none; }
-        .upload-label { cursor: pointer; color: var(--text-secondary); text-decoration: underline; }
+        /* Roadmap List Styles */
+        .roadmap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .roadmap-card { background: var(--surface-color); border: 1px solid var(--border-color); padding: 25px; cursor: pointer; transition: all 0.2s ease; position: relative; }
+        .roadmap-card:hover { border-color: var(--border-hover); background: var(--surface-card); }
+        .roadmap-card h3 { font-size: 18px; margin-bottom: 10px; font-weight: 600; }
+        
+        .upload-box { border: 2px dashed var(--border-color); padding: 30px; text-align: center; cursor: pointer; margin-bottom: 30px; transition: border 0.2s; }
+        .upload-box:hover { border-color: var(--text-secondary); }
+        .upload-box input { display: none; }
 
-        /* Task List */
+        /* Task View Styles */
+        .active-roadmap-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .task-list { display: grid; gap: 15px; }
-        .task-card { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 15px; }
-        .task-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
-        .task-title { font-size: 16px; flex: 1; }
-        .task-meta { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+        .task-card { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); }
+        .task-meta { font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 5px; }
+        .task-title { font-size: 15px; font-weight: 500; margin-bottom: 15px; }
         
-        .task-controls { display: flex; gap: 10px; flex-wrap: wrap; }
-        select { background: #000; color: #fff; border: 1px solid var(--border-color); padding: 8px; outline: none; }
-        input[type="text"].note-input { flex: 1; background: transparent; border: 1px solid var(--border-color); color: #fff; padding: 8px; outline: none; min-width: 200px; }
-        input[type="text"].note-input:focus { border-color: var(--accent-color); }
-        .saving-status { color: #4CAF50; font-size: 12px; display: none; }
+        .task-inputs { display: grid; grid-template-columns: 150px 1fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .task-inputs { grid-template-columns: 1fr; } }
+        
+        select, input[type="text"] { background: #000; color: #fff; border: 1px solid var(--border-color); padding: 10px; outline: none; font-size: 13px; }
+        select:focus, input[type="text"]:focus { border-color: var(--accent-color); }
+
+        /* Global Notes Summary Styles */
+        .notes-summary-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        .notes-summary-table th, .notes-summary-table td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
+        .notes-summary-table th { background: var(--surface-color); color: var(--text-secondary); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+        .notes-summary-table tr:hover { background: var(--surface-color); }
+        .resource-link { color: #fff; text-decoration: underline; font-size: 12px; }
+
+        .saving-status { color: #555; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-box">
-            <h2>ACCESS SECURED AREA</h2>
-            <input type="password" id="password" placeholder="Enter Password">
-            <button class="btn" onclick="checkLogin()">LOGIN</button>
-            <p id="login-error" style="color: red; margin-top: 10px; display: none; font-size: 14px;">Incorrect Password</p>
+            <h2>SECURE ACCESS REQUIRED</h2>
+            <input type="password" id="password" placeholder="ENTER ACCESS KEY">
+            <button class="btn" onclick="checkLogin()">AUTHENTICATE</button>
+            <p id="login-error" style="color: #ff3333; margin-top: 15px; display: none; font-size: 13px; letter-spacing: 1px;">ACCESS DENIED</p>
         </div>
     </div>
 
     <div id="dashboard">
         <header>
-            <h1>ROADMAP_TRACKER</h1>
-            <span id="sync-status" class="saving-status">Synced to Cloud</span>
-            <button class="btn" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="logout()">LOGOUT</button>
+            <h1>CORE_TRACKER_v2</h1>
+            <span id="sync-status" class="saving-status">// SYSTEM SYNCED</span>
+            <button class="btn btn-secondary btn-sm" onclick="logout()">LOGOUT</button>
         </header>
 
-        <div class="upload-section">
-            <label class="upload-label">
-                <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)">
-                [ Upload New Roadmap CSV ]
-            </label>
+        <div class="top-widgets">
+            <div class="widget-card">
+                <div class="widget-label">Session Study Timer</div>
+                <div class="timer-display" id="timer-display">00:00:00</div>
+                <div class="timer-controls">
+                    <button class="btn btn-sm" id="timer-start-btn" onclick="toggleTimer()">Start</button>
+                    <button class="btn btn-secondary btn-sm" onclick="resetTimer()">Reset</button>
+                </div>
+            </div>
+            <div class="widget-card" id="global-progress-card" style="display:none;">
+                <div class="widget-label">Active Roadmap Progress (<span id="active-rm-title">-</span>)</div>
+                <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 700; margin-top: 5px;">
+                    <span>COMPLETED</span>
+                    <span id="progress-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="progress-container">
-            <div style="display: flex; justify-content: space-between;">
-                <span>OVERALL PROGRESS</span>
-                <span id="progress-text">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progress-bar"></div>
-            </div>
+        <div class="nav-tabs">
+            <button class="tab-link active" onclick="switchTab('roadmaps-tab')">Roadmaps</button>
+            <button class="tab-link" id="active-roadmap-nav" style="display:none;" onclick="switchTab('active-tab')">Active View</button>
+            <button class="tab-link" onclick="switchTab('notes-tab'); generateNotesSummary();">Notes & Resources</button>
         </div>
 
-        <div class="task-list" id="task-list">
+        <div id="roadmaps-tab" class="tab-content active">
+            <div class="upload-box">
+                <label style="cursor: pointer; width: 100%; display: block;">
+                    <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)">
+                    + UPLOAD NEW ROADMAP (.CSV)
+                </label>
             </div>
+            <h2 style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; color: var(--text-secondary);">Your Cloud Roadmaps</h2>
+            <div class="roadmap-grid" id="roadmap-list-container">
+                </div>
+        </div>
+
+        <div id="active-tab" class="tab-content">
+            <div class="active-roadmap-header">
+                <h2 id="active-roadmap-heading" style="font-size: 20px; font-weight: 700;">Roadmap Viewer</h2>
+                <button class="btn btn-secondary btn-sm" onclick="switchTab('roadmaps-tab')">← Back to List</button>
+            </div>
+            <div class="task-list" id="task-list">
+                </div>
+        </div>
+
+        <div id="notes-tab" class="tab-content">
+            <h2 style="font-size: 16px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px;">Aggregated Notes & Study Materials</h2>
+            <div style="overflow-x: auto;">
+                <table class="notes-summary-table">
+                    <thead>
+                        <tr>
+                            <th>Roadmap</th>
+                            <th>Timeline</th>
+                            <th>Topic / Task</th>
+                            <th>My Notes</th>
+                            <th>Reference Resource</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notes-summary-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
-        // നിങ്ങളുടെ യഥാർത്ഥ ഫയർബേസ് കോൺഫിഗറേഷൻ ഇവിടെ ചേർത്തിട്ടുണ്ട്
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAyII2lTSbdZgciY4X_aw8sJvaGHURl8_s",
             authDomain: "roadmaptracker-591d1.firebaseapp.com",
@@ -110,15 +196,20 @@
             measurementId: "G-1TN021BLV6"
         };
         
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        const PASSWORD = "admin"; // ലോഗിൻ ചെയ്യാനുള്ള പാസ്‌വേഡ്
-        const DOC_ID = "my_roadmap_progress"; 
-
+        const PASSWORD = "admin"; 
+        
+        let allCloudRoadmaps = {}; // Holds all roadmaps fetched from server
+        let currentRoadmapId = ""; 
         let tasks = [];
         let taskData = {};
+
+        // Timer Variables
+        let timerInterval = null;
+        let elapsedSeconds = 0;
+        let isTimerRunning = false;
 
         function checkLogin() {
             const pwd = document.getElementById('password').value;
@@ -126,7 +217,7 @@
                 sessionStorage.setItem('isLoggedIn', 'true');
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
-                loadDataFromCloud();
+                fetchAllRoadmaps();
             } else {
                 document.getElementById('login-error').style.display = 'block';
             }
@@ -141,71 +232,129 @@
             if (sessionStorage.getItem('isLoggedIn') === 'true') {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
-                loadDataFromCloud();
+                fetchAllRoadmaps();
             }
         };
 
-        function loadDataFromCloud() {
-            const list = document.getElementById('task-list');
-            list.innerHTML = "<p style='text-align:center; color: #a0a0a0;'>Loading data from cloud...</p>";
+        // Navigation Control
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-link').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            
+            // Highlight specific tab link
+            if (tabId === 'roadmaps-tab') document.querySelectorAll('.tab-link')[0].classList.add('active');
+            if (tabId === 'active-tab') document.getElementById('active-roadmap-nav').classList.add('active');
+            if (tabId === 'notes-tab') document.querySelectorAll('.tab-link')[2].classList.add('active');
+        }
 
-            db.collection("roadmaps").doc(DOC_ID).get().then((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    tasks = JSON.parse(data.csvStructure || "[]");
-                    taskData = JSON.parse(data.progressData || "{}");
-                    renderTasks();
-                } else {
-                    list.innerHTML = "<p style='text-align:center; color: #a0a0a0;'>No cloud data found. Please upload your roadmap CSV file.</p>";
+        // Fetch all roadmaps to list on Home screen
+        function fetchAllRoadmaps() {
+            db.collection("roadmaps").get().then((querySnapshot) => {
+                const container = document.getElementById('roadmap-list-container');
+                container.innerHTML = "";
+                allCloudRoadmaps = {};
+
+                if (querySnapshot.empty) {
+                    container.innerHTML = "<p style='color: var(--text-secondary); font-size:14px;'>No roadmaps uploaded yet.</p>";
+                    return;
                 }
-            }).catch((error) => {
-                console.error("Error getting document:", error);
-                list.innerHTML = "<p style='text-align:center; color: red;'>Error connecting to Firebase. Make sure Firestore Rules are set to public.</p>";
-            });
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    allCloudRoadmaps[doc.id] = data;
+
+                    // Compute individual progress percentage for list preview
+                    let rTasks = JSON.parse(data.csvStructure || "[]");
+                    let rData = JSON.parse(data.progressData || "{}");
+                    let doneCount = 0;
+                    for (let k in rData) { if (rData[k].status === 'Completed') doneCount++; }
+                    let pct = rTasks.length ? Math.round((doneCount / rTasks.length) * 100) : 0;
+
+                    const card = document.createElement('div');
+                    card.className = 'roadmap-card';
+                    card.onclick = () => loadActiveRoadmap(doc.id);
+                    card.innerHTML = `
+                        <h3>${data.title || doc.id}</h3>
+                        <div class="task-meta">${rTasks.length} Tasks Total</div>
+                        <div style="font-size: 13px; font-weight:700; text-align:right; margin-top:15px;">${pct}% DONE</div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
+                    `;
+                    container.appendChild(card);
+                });
+            }).catch(err => console.error("Error fetching roadmaps:", err));
         }
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
+            // Generate clean name from file
+            const roadmapTitle = file.name.replace(/\.[^/.]+$/, "");
+
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    tasks = results.data.filter(row => row.Task && row.Task.trim() !== "");
-                    taskData = {};
-                    tasks.forEach((task, index) => {
-                        taskData[index] = { 
+                    let uploadedTasks = results.data.filter(row => row.Task && row.Task.trim() !== "");
+                    let uploadedData = {};
+                    uploadedTasks.forEach((task, index) => {
+                        uploadedData[index] = { 
                             status: 'Not Completed', 
                             note: '',
+                            link: '',
                             day: task.Day || '0'
                         };
                     });
-                    saveDataToCloud();
-                    renderTasks();
+
+                    // Save new distinct document into Firestore
+                    db.collection("roadmaps").add({
+                        title: roadmapTitle,
+                        csvStructure: JSON.stringify(uploadedTasks),
+                        progressData: JSON.stringify(uploadedData),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        fetchAllRoadmaps();
+                    }).catch(err => alert("Upload failed: " + err));
                 }
             });
         }
 
+        function loadActiveRoadmap(docId) {
+            currentRoadmapId = docId;
+            const data = allCloudRoadmaps[docId];
+            
+            tasks = JSON.parse(data.csvStructure || "[]");
+            taskData = JSON.parse(data.progressData || "{}");
+
+            // Setup active view header titles
+            document.getElementById('active-rm-title').innerText = data.title;
+            document.getElementById('active-roadmap-heading').innerText = data.title;
+            
+            document.getElementById('global-progress-card').style.display = 'flex';
+            document.getElementById('active-roadmap-nav').style.display = 'block';
+
+            renderTasks();
+            switchTab('active-tab');
+        }
+
         function saveDataToCloud() {
+            if (!currentRoadmapId) return;
             const syncStatus = document.getElementById('sync-status');
-            syncStatus.innerText = "Saving to Cloud...";
-            syncStatus.style.display = "inline";
+            syncStatus.innerText = "// SAVING TO CLOUD...";
             syncStatus.style.color = "#ffaa00";
 
-            db.collection("roadmaps").doc(DOC_ID).set({
-                csvStructure: JSON.stringify(tasks),
+            db.collection("roadmaps").doc(currentRoadmapId).update({
                 progressData: JSON.stringify(taskData),
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                syncStatus.innerText = "Synced to Cloud";
-                syncStatus.style.color = "#4CAF50";
-                setTimeout(() => { syncStatus.style.display = "none"; }, 2000);
-                updateProgress();
+                syncStatus.innerText = "// SYSTEM SYNCED";
+                syncStatus.style.color = "#555";
+                updateProgressDataUI();
             }).catch((error) => {
-                console.error("Error writing document: ", error);
-                syncStatus.innerText = "Sync Failed!";
-                syncStatus.style.color = "red";
+                syncStatus.innerText = "// SYNC ERROR";
+                syncStatus.style.color = "#ff3333";
             });
         }
 
@@ -215,6 +364,7 @@
             let lastCompletedDay = localStorage.getItem('lastCompletedDay');
 
             if (newStatus === 'Completed') {
+                // Pacing rule validation
                 if (lastCompletedDate === today && lastCompletedDay && lastCompletedDay !== day) {
                     alert("ഒരു ദിവസം തന്നെ അടുത്ത ദിവസത്തെ ടാസ്ക്കുകൾ ചെയ്യാൻ കഴിയില്ല. ഇന്നത്തെ കാര്യങ്ങൾ ഇൻ-ഡെപ്ത് ആയി പഠിക്കാം.");
                     renderTasks();
@@ -235,7 +385,13 @@
             typingTimer = setTimeout(saveDataToCloud, 1000); 
         }
 
-        function updateProgress() {
+        function handleLinkChange(index, linkText) {
+            clearTimeout(typingTimer);
+            taskData[index].link = linkText;
+            typingTimer = setTimeout(saveDataToCloud, 1000);
+        }
+
+        function updateProgressDataUI() {
             if (tasks.length === 0) return;
             let completed = 0;
             for (let key in taskData) {
@@ -250,36 +406,100 @@
             const list = document.getElementById('task-list');
             list.innerHTML = '';
 
-            if(tasks.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color: #a0a0a0;'>Roadmap is empty. Please upload a CSV file.</p>";
-                return;
-            }
-
             tasks.forEach((task, index) => {
-                let data = taskData[index] || { status: 'Not Completed', note: '', day: task.Day };
+                let data = taskData[index] || { status: 'Not Completed', note: '', link: '', day: task.Day };
                 
                 const card = document.createElement('div');
                 card.className = 'task-card';
                 
                 card.innerHTML = `
-                    <div class="task-header">
-                        <div>
-                            <div class="task-meta">Day ${task.Day || '-'} | ${task.Week || '-'}</div>
-                            <div class="task-title">${task.Task}</div>
-                        </div>
-                    </div>
-                    <div class="task-controls">
+                    <div class="task-meta">Day ${task.Day || '-'} | ${task.Week || '-'}</div>
+                    <div class="task-title">${task.Task}</div>
+                    <div class="task-inputs">
                         <select onchange="handleStatusChange(${index}, '${task.Day}', this.value)">
                             <option value="Not Completed" ${data.status === 'Not Completed' ? 'selected' : ''}>Not Completed</option>
                             <option value="In Progress" ${data.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Completed" ${data.status === 'Completed' ? 'selected' : ''}>Completed</option>
                         </select>
-                        <input type="text" class="note-input" placeholder="Add notes here..." value="${data.note}" oninput="handleNoteChange(${index}, this.value)">
+                        <input type="text" placeholder="Add study notes..." value="${data.note || ''}" oninput="handleNoteChange(${index}, this.value)">
+                        <input type="text" placeholder="YouTube or Resource URL..." value="${data.link || ''}" oninput="handleLinkChange(${index}, this.value)">
                     </div>
                 `;
                 list.appendChild(card);
             });
-            updateProgress();
+            updateProgressDataUI();
+        }
+
+        // Generate Aggregate Summary Tab
+        function generateNotesSummary() {
+            const body = document.getElementById('notes-summary-body');
+            body.innerHTML = "";
+
+            let notesFound = false;
+
+            // Loop through all roadmaps fetched to pull out filled notes or links
+            for (let id in allCloudRoadmaps) {
+                let rm = allCloudRoadmaps[id];
+                let rTasks = JSON.parse(rm.csvStructure || "[]");
+                let rData = JSON.parse(rm.progressData || "{}");
+
+                rTasks.forEach((task, index) => {
+                    let itemData = rData[index];
+                    if (itemData && (itemData.note.trim() !== "" || itemData.link.trim() !== "")) {
+                        notesFound = true;
+                        const row = document.createElement('tr');
+                        
+                        let displayLink = itemData.link ? `<a href="${itemData.link}" target="_blank" class="resource-link">Open Resource ↗</a>` : '-';
+                        
+                        row.innerHTML = `
+                            <div style="font-weight:600;"><td>${rm.title}</td></div>
+                            <td style="color:var(--text-secondary); font-size:12px;">Day ${task.Day || '-'} (${task.Week || '-'})</td>
+                            <td>${task.Task}</td>
+                            <td>${itemData.note || '-'}</td>
+                            <td>${displayLink}</td>
+                        `;
+                        body.appendChild(row);
+                    }
+                });
+            }
+
+            if (!notesFound) {
+                body.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-secondary);">No notes or resource links added yet.</td></tr>`;
+            }
+        }
+
+        // Study Timer Module
+        function toggleTimer() {
+            const btn = document.getElementById('timer-start-btn');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                btn.innerText = "Start";
+                btn.classList.remove('btn-secondary');
+            } else {
+                timerInterval = setInterval(() => {
+                    elapsedSeconds++;
+                    updateTimerDisplay();
+                }, 1000);
+                btn.innerText = "Pause";
+                btn.classList.add('btn-secondary');
+            }
+            isTimerRunning = !isTimerRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            elapsedSeconds = 0;
+            isTimerRunning = false;
+            document.getElementById('timer-start-btn').innerText = "Start";
+            document.getElementById('timer-start-btn').classList.remove('btn-secondary');
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const hrs = String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(elapsedSeconds % 60).padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${hrs}:${mins}:${secs}`;
         }
     </script>
 </body>
