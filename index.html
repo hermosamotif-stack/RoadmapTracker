@@ -3,178 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>Premium Cybersecurity Tracker</title>
+    <title>Enterprise Cybersecurity Academy</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg-color: #000000; 
-            --surface-color: #0a0a0a; 
-            --surface-card: #121212;
-            --text-primary: #ffffff; 
-            --text-secondary: #888888; 
-            --accent-color: #ffffff; 
-            --border-color: #222222; 
-            --border-hover: #444444;
+            --bg-base: #030303;
+            --bg-surface: #0a0a0c;
+            --bg-card: #111115;
+            --text-main: #ffffff; 
+            --text-muted: #71717a; 
+            --border-subtle: #1f1f23;
+            --border-focus: #44444a;
+            
+            /* Status Colors */
+            --color-completed-bg: rgba(0, 230, 118, 0.03);
+            --color-completed-border: #00e676;
+            --color-progress-bg: rgba(255, 255, 255, 0.02);
+            --color-progress-border: #52525b;
         }
+        
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Space Grotesk', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; padding-bottom: 60px; }
+        body { background-color: var(--bg-base); color: var(--text-main); line-height: 1.5; padding-bottom: 60px; }
 
-        /* Login Screen */
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .login-box { background: var(--surface-color); padding: 40px; border: 1px solid var(--border-color); border-radius: 0px; text-align: center; width: 100%; max-width: 400px; }
-        .login-box h2 { margin-bottom: 25px; font-weight: 700; letter-spacing: 2px; font-size: 20px; }
-        .login-box input { width: 100%; padding: 14px; margin-bottom: 20px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); outline: none; text-align: center; font-size: 16px; }
-        .login-box input:focus { border-color: var(--accent-color); }
+        /* Login Screen Pro */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-color: var(--bg-base); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .login-box { background: var(--bg-surface); padding: 40px; border: 1px solid var(--border-subtle); width: 100%; max-width: 420px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .login-box h2 { font-size: 18px; font-weight: 600; letter-spacing: 3px; margin-bottom: 25px; text-transform: uppercase; color: #fff; }
+        .login-box input { width: 100%; padding: 14px; margin-bottom: 20px; background: #000; border: 1px solid var(--border-subtle); color: var(--text-main); outline: none; text-align: center; font-size: 15px; letter-spacing: 2px; }
+        .login-box input:focus { border-color: var(--text-main); }
         
-        .btn { background: var(--accent-color); color: #000; border: 1px solid var(--accent-color); padding: 12px 24px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+        /* Typography & Layout Buttons */
+        .btn { background: var(--text-main); color: #000; border: 1px solid var(--text-main); padding: 12px 28px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
         .btn:hover { background: transparent; color: #fff; }
-        .btn-secondary { background: transparent; color: #fff; border: 1px solid var(--border-color); }
-        .btn-secondary:hover { border-color: #fff; }
+        .btn-secondary { background: transparent; color: #fff; border: 1px solid var(--border-subtle); }
+        .btn-secondary:hover { border-color: var(--text-main); }
+        .btn-sm { padding: 8px 16px; font-size: 11px; }
 
-        /* Dashboard Layout */
-        #dashboard { display: none; max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
-        h1 { font-size: 22px; font-weight: 700; letter-spacing: 3px; }
+        /* Professional Header Layout */
+        #dashboard { display: none; max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 25px; }
+        h1 { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
 
-        /* Top Bar Widgets (Timer & Status) */
-        .top-widgets { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        @media (max-width: 768px) { .top-widgets { grid-template-columns: 1fr; } }
+        /* Grid Widgets */
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 35px; }
+        @media (max-width: 768px) { .metrics-grid { grid-template-columns: 1fr; } }
         
-        .widget-card { background: var(--surface-color); border: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; justify-content: center; }
-        .widget-label { font-size: 11px; color: var(--text-secondary); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+        .metric-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 24px; display: flex; flex-direction: column; justify-content: center; position: relative; }
+        .metric-label { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
         
-        /* Timer UI */
-        .timer-display { font-size: 32px; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; font-family: monospace; }
-        .timer-controls { display: flex; gap: 10px; }
-        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        /* Stats & Timer Customization */
+        .timer-val { font-size: 36px; font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; font-family: monospace; }
+        .timer-actions { display: flex; gap: 12px; }
 
-        /* Navigation Tabs */
-        .nav-tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 30px; }
-        .tab-link { background: transparent; border: none; color: var(--text-secondary); padding: 12px 20px; cursor: pointer; font-size: 13px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid transparent; }
-        .tab-link.active { color: var(--text-primary); border-bottom-color: var(--accent-color); font-weight: 700; }
+        /* Modern Navigation Tabs */
+        .navigation-bar { display: flex; gap: 8px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 35px; }
+        .nav-item { background: transparent; border: none; color: var(--text-muted); padding: 14px 24px; cursor: pointer; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-item:hover { color: #fff; }
+        .nav-item.active-tab-link { color: var(--text-main); border-bottom-color: var(--text-main); }
 
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-panel { display: none; }
+        .tab-panel.active-panel { display: block; }
 
-        /* Progress Bar */
-        .progress-bar-bg { width: 100%; height: 6px; background: #111; overflow: hidden; margin-top: 8px; border: 1px solid var(--border-color); }
-        .progress-bar-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 0.4s ease; }
+        /* Progress Bar Styling */
+        .bar-container { width: 100%; height: 6px; background: #141416; overflow: hidden; margin-top: 12px; border: 1px solid var(--border-subtle); }
+        .bar-fill { height: 100%; background: #fff; width: 0%; transition: width 0.4s cubic-bezier(0.1, 0.8, 0.2, 1); }
         
-        /* Roadmap List Styles */
-        .roadmap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
-        .roadmap-card { background: var(--surface-color); border: 1px solid var(--border-color); padding: 25px; cursor: pointer; transition: all 0.2s ease; position: relative; }
-        .roadmap-card:hover { border-color: var(--border-hover); background: var(--surface-card); }
-        .roadmap-card h3 { font-size: 18px; margin-bottom: 10px; font-weight: 600; }
+        /* Professional Roadmap Catalog */
+        .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-top: 20px; }
+        .catalog-item { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 28px; cursor: pointer; transition: all 0.2s; }
+        .catalog-item:hover { border-color: var(--border-focus); transform: translateY(-2px); }
+        .catalog-item h3 { font-size: 17px; margin-bottom: 12px; font-weight: 600; letter-spacing: 0.5px; }
         
-        .upload-box { border: 2px dashed var(--border-color); padding: 30px; text-align: center; cursor: pointer; margin-bottom: 30px; transition: border 0.2s; }
-        .upload-box:hover { border-color: var(--text-secondary); }
-        .upload-box input { display: none; }
+        .upload-dropzone { border: 1px dashed var(--border-subtle); background: var(--bg-surface); padding: 35px; text-align: center; cursor: pointer; margin-bottom: 35px; transition: all 0.2s; font-size: 13px; letter-spacing: 1px; color: var(--text-muted); }
+        .upload-dropzone:hover { border-color: var(--text-main); color: #fff; }
+        .upload-dropzone input { display: none; }
 
-        /* Task View Styles */
-        .active-roadmap-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .task-list { display: grid; gap: 15px; }
-        .task-card { background: var(--surface-color); padding: 20px; border: 1px solid var(--border-color); }
-        .task-meta { font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 5px; }
-        .task-title { font-size: 15px; font-weight: 500; margin-bottom: 15px; }
+        /* Advanced Task Card States */
+        .task-view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .tasks-container { display: grid; gap: 20px; }
         
-        .task-inputs { display: grid; grid-template-columns: 150px 1fr 1fr; gap: 15px; }
-        @media (max-width: 768px) { .task-inputs { grid-template-columns: 1fr; } }
+        /* Base Card Styling */
+        .learning-task-card { background: var(--bg-surface); padding: 24px; border: 1px solid var(--border-subtle); border-left: 4px solid #27272a; transition: all 0.2s ease; }
         
-        select, input[type="text"] { background: #000; color: #fff; border: 1px solid var(--border-color); padding: 10px; outline: none; font-size: 13px; }
-        select:focus, input[type="text"]:focus { border-color: var(--accent-color); }
+        /* Status Color Classes (Requested Features) */
+        .learning-task-card.state-completed { 
+            background-color: var(--color-completed-bg); 
+            border-left-color: var(--color-completed-border);
+            border-top: 1px solid rgba(0, 230, 118, 0.15);
+            border-right: 1px solid rgba(0, 230, 118, 0.15);
+            border-bottom: 1px solid rgba(0, 230, 118, 0.15);
+        }
+        .learning-task-card.state-inprogress { 
+            background-color: var(--color-progress-bg); 
+            border-left-color: var(--color-progress-border);
+            border-top: 1px solid var(--border-focus);
+            border-right: 1px solid var(--border-focus);
+            border-bottom: 1px solid var(--border-focus);
+        }
 
-        /* Global Notes Summary Styles */
-        .notes-summary-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        .notes-summary-table th, .notes-summary-table td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
-        .notes-summary-table th { background: var(--surface-color); color: var(--text-secondary); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
-        .notes-summary-table tr:hover { background: var(--surface-color); }
-        .resource-link { color: #fff; text-decoration: underline; font-size: 12px; }
+        .task-info-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .task-title-text { font-size: 16px; font-weight: 500; letter-spacing: 0.3px; color: #f4f4f5; }
+        
+        .task-interactive-inputs { display: grid; grid-template-columns: 160px 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .task-interactive-inputs { grid-template-columns: 1fr; } }
+        
+        select, input[type="text"] { background: #000; color: #fff; border: 1px solid var(--border-subtle); padding: 12px; outline: none; font-size: 13px; }
+        select:focus, input[type="text"]:focus { border-color: var(--border-focus); }
 
-        .saving-status { color: #555; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+        /* Notes Table View */
+        .lms-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; background: var(--bg-surface); }
+        .lms-table th, .lms-table td { border: 1px solid var(--border-subtle); padding: 14px; text-align: left; }
+        .lms-table th { background: #0d0d11; color: var(--text-muted); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }
+        .lms-table tr:hover { background: #121216; }
+        .link-badge { color: #fff; text-decoration: underline; font-size: 12px; font-weight: 500; }
+
+        .saving-status { color: var(--text-muted); font-size: 11px; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-box">
-            <h2>SECURE ACCESS REQUIRED</h2>
-            <input type="password" id="password" placeholder="ENTER ACCESS KEY">
+            <h2>ACADEMY MANAGEMENT SYSTEM</h2>
+            <input type="password" id="password" placeholder="ENTER TERMINAL KEY">
             <button class="btn" onclick="checkLogin()">AUTHENTICATE</button>
-            <p id="login-error" style="color: #ff3333; margin-top: 15px; display: none; font-size: 13px; letter-spacing: 1px;">ACCESS DENIED</p>
+            <p id="login-error" style="color: #ef4444; margin-top: 15px; display: none; font-size: 12px; letter-spacing: 1px; font-weight:600;">ACCESS DENIED</p>
         </div>
     </div>
 
     <div id="dashboard">
         <header>
-            <h1>CORE_TRACKER_v2</h1>
-            <span id="sync-status" class="saving-status">// SYSTEM SYNCED</span>
+            <h1>ACADEMY_WORKSPACE_v2</h1>
+            <span id="sync-status" class="saving-status">// ENDPOINT ONLINE</span>
             <button class="btn btn-secondary btn-sm" onclick="logout()">LOGOUT</button>
         </header>
 
-        <div class="top-widgets">
-            <div class="widget-card">
-                <div class="widget-label">Session Study Timer</div>
-                <div class="timer-display" id="timer-display">00:00:00</div>
-                <div class="timer-controls">
-                    <button class="btn btn-sm" id="timer-start-btn" onclick="toggleTimer()">Start</button>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">STATION SESSION TRACKER</div>
+                <div class="timer-val" id="timer-display">00:00:00</div>
+                <div class="timer-actions">
+                    <button class="btn btn-sm" id="timer-start-btn" onclick="toggleTimer()">Start Tracking</button>
                     <button class="btn btn-secondary btn-sm" onclick="resetTimer()">Reset</button>
                 </div>
             </div>
-            <div class="widget-card" id="global-progress-card" style="display:none;">
-                <div class="widget-label">Active Roadmap Progress (<span id="active-rm-title">-</span>)</div>
-                <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 700; margin-top: 5px;">
-                    <span>COMPLETED</span>
+            <div class="metric-card" id="global-progress-card" style="display:none;">
+                <div class="metric-label">Active Core Progress (<span id="active-rm-title">-</span>)</div>
+                <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 700; margin-top: 6px;">
+                    <span>COMPLETED MATRIX</span>
                     <span id="progress-text">0%</span>
                 </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-bar"></div>
+                <div class="bar-container">
+                    <div class="bar-fill" id="progress-bar"></div>
                 </div>
             </div>
         </div>
 
-        <div class="nav-tabs">
-            <button class="tab-link active" onclick="switchTab('roadmaps-tab')">Roadmaps</button>
-            <button class="tab-link" id="active-roadmap-nav" style="display:none;" onclick="switchTab('active-tab')">Active View</button>
-            <button class="tab-link" onclick="switchTab('notes-tab'); generateNotesSummary();">Notes & Resources</button>
+        <div class="navigation-bar">
+            <button class="nav-item active-tab-link" onclick="switchTab('roadmaps-tab')">Catalog</button>
+            <button class="nav-item" id="active-roadmap-nav" style="display:none;" onclick="switchTab('active-tab')">Active Workspace</button>
+            <button class="nav-item" onclick="switchTab('notes-tab'); generateNotesSummary();">Knowledge Base</button>
         </div>
 
-        <div id="roadmaps-tab" class="tab-content active">
-            <div class="upload-box">
+        <div id="roadmaps-tab" class="tab-panel active-panel">
+            <div class="upload-dropzone">
                 <label style="cursor: pointer; width: 100%; display: block;">
                     <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)">
-                    + UPLOAD NEW ROADMAP (.CSV)
+                    + IMPORT NEW SYLLABUS SCHEDULER (.CSV)
                 </label>
             </div>
-            <h2 style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; color: var(--text-secondary);">Your Cloud Roadmaps</h2>
-            <div class="roadmap-grid" id="roadmap-list-container">
+            <h2 style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; color: var(--text-muted); font-weight: 600;">ACTIVE ARCHIVES IN CLOUD</h2>
+            <div class="catalog-grid" id="roadmap-list-container">
                 </div>
         </div>
 
-        <div id="active-tab" class="tab-content">
-            <div class="active-roadmap-header">
-                <h2 id="active-roadmap-heading" style="font-size: 20px; font-weight: 700;">Roadmap Viewer</h2>
-                <button class="btn btn-secondary btn-sm" onclick="switchTab('roadmaps-tab')">← Back to List</button>
+        <div id="active-tab" class="tab-panel">
+            <div class="task-view-header">
+                <h2 id="active-roadmap-heading" style="font-size: 18px; font-weight: 600; letter-spacing: 0.5px;">Workspace Core</h2>
+                <button class="btn btn-secondary btn-sm" onclick="switchTab('roadmaps-tab')">← Back to Catalog</button>
             </div>
-            <div class="task-list" id="task-list">
+            <div class="tasks-container" id="task-list">
                 </div>
         </div>
 
-        <div id="notes-tab" class="tab-content">
-            <h2 style="font-size: 16px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px;">Aggregated Notes & Study Materials</h2>
+        <div id="notes-tab" class="tab-panel">
+            <h2 style="font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px; color: #fff;">COMPILING RESOURCE INTELLIGENCE</h2>
             <div style="overflow-x: auto;">
-                <table class="notes-summary-table">
+                <table class="lms-table">
                     <thead>
                         <tr>
-                            <th>Roadmap</th>
+                            <th>Module Title</th>
                             <th>Timeline</th>
-                            <th>Topic / Task</th>
-                            <th>My Notes</th>
-                            <th>Reference Resource</th>
+                            <th>Objective Domain</th>
+                            <th>Captured Notes</th>
+                            <th>Hyperlink Resource</th>
                         </tr>
                     </thead>
                     <tbody id="notes-summary-body">
@@ -185,7 +212,7 @@
     </div>
 
     <script>
-        // Firebase Configuration
+        // Injecting the provided Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAyII2lTSbdZgciY4X_aw8sJvaGHURl8_s",
             authDomain: "roadmaptracker-591d1.firebaseapp.com",
@@ -201,12 +228,12 @@
 
         const PASSWORD = "admin"; 
         
-        let allCloudRoadmaps = {}; // Holds all roadmaps fetched from server
+        let allCloudRoadmaps = {}; 
         let currentRoadmapId = ""; 
         let tasks = [];
         let taskData = {};
 
-        // Timer Variables
+        // Stopwatch Variables
         let timerInterval = null;
         let elapsedSeconds = 0;
         let isTimerRunning = false;
@@ -236,20 +263,17 @@
             }
         };
 
-        // Navigation Control
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-link').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active-panel'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active-tab-link'));
             
-            document.getElementById(tabId).classList.add('active');
+            document.getElementById(tabId).classList.add('active-panel');
             
-            // Highlight specific tab link
-            if (tabId === 'roadmaps-tab') document.querySelectorAll('.tab-link')[0].classList.add('active');
-            if (tabId === 'active-tab') document.getElementById('active-roadmap-nav').classList.add('active');
-            if (tabId === 'notes-tab') document.querySelectorAll('.tab-link')[2].classList.add('active');
+            if (tabId === 'roadmaps-tab') document.querySelectorAll('.nav-item')[0].classList.add('active-tab-link');
+            if (tabId === 'active-tab') document.getElementById('active-roadmap-nav').classList.add('active-tab-link');
+            if (tabId === 'notes-tab') document.querySelectorAll('.nav-item')[2].classList.add('active-tab-link');
         }
 
-        // Fetch all roadmaps to list on Home screen
         function fetchAllRoadmaps() {
             db.collection("roadmaps").get().then((querySnapshot) => {
                 const container = document.getElementById('roadmap-list-container');
@@ -257,7 +281,7 @@
                 allCloudRoadmaps = {};
 
                 if (querySnapshot.empty) {
-                    container.innerHTML = "<p style='color: var(--text-secondary); font-size:14px;'>No roadmaps uploaded yet.</p>";
+                    container.innerHTML = "<p style='color: var(--text-muted); font-size:13px;'>Workspace Catalog is currently empty.</p>";
                     return;
                 }
 
@@ -265,7 +289,6 @@
                     const data = doc.data();
                     allCloudRoadmaps[doc.id] = data;
 
-                    // Compute individual progress percentage for list preview
                     let rTasks = JSON.parse(data.csvStructure || "[]");
                     let rData = JSON.parse(data.progressData || "{}");
                     let doneCount = 0;
@@ -273,24 +296,23 @@
                     let pct = rTasks.length ? Math.round((doneCount / rTasks.length) * 100) : 0;
 
                     const card = document.createElement('div');
-                    card.className = 'roadmap-card';
+                    card.className = 'catalog-item';
                     card.onclick = () => loadActiveRoadmap(doc.id);
                     card.innerHTML = `
                         <h3>${data.title || doc.id}</h3>
-                        <div class="task-meta">${rTasks.length} Tasks Total</div>
-                        <div style="font-size: 13px; font-weight:700; text-align:right; margin-top:15px;">${pct}% DONE</div>
-                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
+                        <div class="metric-label" style="margin:0">${rTasks.length} Domain Modules</div>
+                        <div style="font-size: 14px; font-weight:700; text-align:right; margin-top:20px; letter-spacing:0.5px;">${pct}% SECURED</div>
+                        <div class="bar-container"><div class="bar-fill" style="width: ${pct}%"></div></div>
                     `;
                     container.appendChild(card);
                 });
-            }).catch(err => console.error("Error fetching roadmaps:", err));
+            }).catch(err => console.error("Cloud connection anomaly:", err));
         }
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            // Generate clean name from file
             const roadmapTitle = file.name.replace(/\.[^/.]+$/, "");
 
             Papa.parse(file, {
@@ -308,7 +330,6 @@
                         };
                     });
 
-                    // Save new distinct document into Firestore
                     db.collection("roadmaps").add({
                         title: roadmapTitle,
                         csvStructure: JSON.stringify(uploadedTasks),
@@ -316,7 +337,7 @@
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
                         fetchAllRoadmaps();
-                    }).catch(err => alert("Upload failed: " + err));
+                    }).catch(err => alert("Upload sequence failed: " + err));
                 }
             });
         }
@@ -328,7 +349,6 @@
             tasks = JSON.parse(data.csvStructure || "[]");
             taskData = JSON.parse(data.progressData || "{}");
 
-            // Setup active view header titles
             document.getElementById('active-rm-title').innerText = data.title;
             document.getElementById('active-roadmap-heading').innerText = data.title;
             
@@ -342,29 +362,29 @@
         function saveDataToCloud() {
             if (!currentRoadmapId) return;
             const syncStatus = document.getElementById('sync-status');
-            syncStatus.innerText = "// SAVING TO CLOUD...";
-            syncStatus.style.color = "#ffaa00";
+            syncStatus.innerText = "// INITIATING CLOUD DATA SYNC...";
+            syncStatus.style.color = "#eab308";
 
             db.collection("roadmaps").doc(currentRoadmapId).update({
                 progressData: JSON.stringify(taskData),
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
-                syncStatus.innerText = "// SYSTEM SYNCED";
-                syncStatus.style.color = "#555";
+                syncStatus.innerText = "// SYSTEM SYNCED CLOUD";
+                syncStatus.style.color = "var(--text-muted)";
                 updateProgressDataUI();
             }).catch((error) => {
-                syncStatus.innerText = "// SYNC ERROR";
-                syncStatus.style.color = "#ff3333";
+                syncStatus.innerText = "// DATABASE ANOMALY ERROR";
+                syncStatus.style.color = "#ef4444";
             });
         }
 
+        // Fixed Pacing and Reset Lock Logic (Bug Resolution)
         function handleStatusChange(index, day, newStatus) {
             let today = new Date().toDateString();
             let lastCompletedDate = localStorage.getItem('lastCompletedDate');
             let lastCompletedDay = localStorage.getItem('lastCompletedDay');
 
             if (newStatus === 'Completed') {
-                // Pacing rule validation
                 if (lastCompletedDate === today && lastCompletedDay && lastCompletedDay !== day) {
                     alert("ഒരു ദിവസം തന്നെ അടുത്ത ദിവസത്തെ ടാസ്ക്കുകൾ ചെയ്യാൻ കഴിയില്ല. ഇന്നത്തെ കാര്യങ്ങൾ ഇൻ-ഡെപ്ത് ആയി പഠിക്കാം.");
                     renderTasks();
@@ -372,10 +392,17 @@
                 }
                 localStorage.setItem('lastCompletedDate', today);
                 localStorage.setItem('lastCompletedDay', day);
+            } else {
+                // BUG RESOLUTION: If the user changes status AWAY from Completed, reset the day lock system if this task held it.
+                if (lastCompletedDate === today && lastCompletedDay === day) {
+                    localStorage.removeItem('lastCompletedDate');
+                    localStorage.removeItem('lastCompletedDay');
+                }
             }
 
             taskData[index].status = newStatus;
             saveDataToCloud();
+            renderTasks(); // Instantly update state classes to reflect new style color bindings
         }
 
         let typingTimer;
@@ -402,6 +429,7 @@
             document.getElementById('progress-text').innerText = percentage + '%';
         }
 
+        // Updated UI Color Rendering Logic (Requested Feature)
         function renderTasks() {
             const list = document.getElementById('task-list');
             list.innerHTML = '';
@@ -409,20 +437,30 @@
             tasks.forEach((task, index) => {
                 let data = taskData[index] || { status: 'Not Completed', note: '', link: '', day: task.Day };
                 
+                // Map logical state to UI CSS Hooks
+                let stateClass = "";
+                if (data.status === 'Completed') {
+                    stateClass = "state-completed";
+                } else if (data.status === 'In Progress') {
+                    stateClass = "state-inprogress";
+                }
+
                 const card = document.createElement('div');
-                card.className = 'task-card';
+                card.className = `learning-task-card ${stateClass}`;
                 
                 card.innerHTML = `
-                    <div class="task-meta">Day ${task.Day || '-'} | ${task.Week || '-'}</div>
-                    <div class="task-title">${task.Task}</div>
-                    <div class="task-inputs">
+                    <div class="task-info-row">
+                        <div class="task-title-text">${task.Task}</div>
+                        <div class="metric-label" style="margin:0; white-space: nowrap;">Day ${task.Day || '-'} | ${task.Week || '-'}</div>
+                    </div>
+                    <div class="task-interactive-inputs">
                         <select onchange="handleStatusChange(${index}, '${task.Day}', this.value)">
                             <option value="Not Completed" ${data.status === 'Not Completed' ? 'selected' : ''}>Not Completed</option>
                             <option value="In Progress" ${data.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Completed" ${data.status === 'Completed' ? 'selected' : ''}>Completed</option>
                         </select>
-                        <input type="text" placeholder="Add study notes..." value="${data.note || ''}" oninput="handleNoteChange(${index}, this.value)">
-                        <input type="text" placeholder="YouTube or Resource URL..." value="${data.link || ''}" oninput="handleLinkChange(${index}, this.value)">
+                        <input type="text" placeholder="Capture concept intelligence notes..." value="${data.note || ''}" oninput="handleNoteChange(${index}, this.value)">
+                        <input type="text" placeholder="Reference YouTube / Documentation URL..." value="${data.link || ''}" oninput="handleLinkChange(${index}, this.value)">
                     </div>
                 `;
                 list.appendChild(card);
@@ -430,14 +468,11 @@
             updateProgressDataUI();
         }
 
-        // Generate Aggregate Summary Tab
         function generateNotesSummary() {
             const body = document.getElementById('notes-summary-body');
             body.innerHTML = "";
-
             let notesFound = false;
 
-            // Loop through all roadmaps fetched to pull out filled notes or links
             for (let id in allCloudRoadmaps) {
                 let rm = allCloudRoadmaps[id];
                 let rTasks = JSON.parse(rm.csvStructure || "[]");
@@ -448,13 +483,12 @@
                     if (itemData && (itemData.note.trim() !== "" || itemData.link.trim() !== "")) {
                         notesFound = true;
                         const row = document.createElement('tr');
-                        
-                        let displayLink = itemData.link ? `<a href="${itemData.link}" target="_blank" class="resource-link">Open Resource ↗</a>` : '-';
+                        let displayLink = itemData.link ? `<a href="${itemData.link}" target="_blank" class="link-badge">Source Reference ↗</a>` : '-';
                         
                         row.innerHTML = `
-                            <div style="font-weight:600;"><td>${rm.title}</td></div>
-                            <td style="color:var(--text-secondary); font-size:12px;">Day ${task.Day || '-'} (${task.Week || '-'})</td>
-                            <td>${task.Task}</td>
+                            <td style="font-weight:600;">${rm.title}</td>
+                            <td style="color:var(--text-muted); font-size:12px;">Day ${task.Day || '-'} (${task.Week || '-'})</td>
+                            <td style="font-weight:500;">${task.Task}</td>
                             <td>${itemData.note || '-'}</td>
                             <td>${displayLink}</td>
                         `;
@@ -464,23 +498,23 @@
             }
 
             if (!notesFound) {
-                body.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-secondary);">No notes or resource links added yet.</td></tr>`;
+                body.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 30px;">Knowledge base records are currently empty.</td></tr>`;
             }
         }
 
-        // Study Timer Module
+        // Chronometer Session Operations
         function toggleTimer() {
             const btn = document.getElementById('timer-start-btn');
             if (isTimerRunning) {
                 clearInterval(timerInterval);
-                btn.innerText = "Start";
+                btn.innerText = "Start Tracking";
                 btn.classList.remove('btn-secondary');
             } else {
                 timerInterval = setInterval(() => {
                     elapsedSeconds++;
                     updateTimerDisplay();
                 }, 1000);
-                btn.innerText = "Pause";
+                btn.innerText = "Pause Session";
                 btn.classList.add('btn-secondary');
             }
             isTimerRunning = !isTimerRunning;
@@ -490,7 +524,7 @@
             clearInterval(timerInterval);
             elapsedSeconds = 0;
             isTimerRunning = false;
-            document.getElementById('timer-start-btn').innerText = "Start";
+            document.getElementById('timer-start-btn').innerText = "Start Tracking";
             document.getElementById('timer-start-btn').classList.remove('btn-secondary');
             updateTimerDisplay();
         }
